@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PharmaCare: Inventory & Prescription Tracker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600&display=swap">
+<style>
+:root{--bg:#EEF4F1;--sf:#fff;--ink:#12332B;--mut:#5B746C;--ln:#D3E0DA;--hd:#0F6B54;--hl:#CDEFE2;--red:#B8321D;--redbg:#FBE4DE;--amb:#8A5A00;--ambbg:#FFF1CC;--ring:#3AA68A;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0C1814;--sf:#13241F;--ink:#E4F2EC;--mut:#8FAEA3;--ln:#25403A;--hd:#0F5845;--hl:#1C4A3E;--red:#FF9A85;--redbg:#4A1E17;--amb:#F0C050;--ambbg:#4A3A0C;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0C1814;--sf:#13241F;--ink:#E4F2EC;--mut:#8FAEA3;--ln:#25403A;--hd:#0F5845;--hl:#1C4A3E;--red:#FF9A85;--redbg:#4A1E17;--amb:#F0C050;--ambbg:#4A3A0C;color-scheme:dark}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Figtree,system-ui,sans-serif}
+h1,h2,h3{font-family:'Bricolage Grotesque',Figtree,system-ui,sans-serif;margin:0;letter-spacing:-.01em}
+h2{font-size:18px;margin-bottom:2px}small,.cap{color:var(--mut);font-size:13px}.cap{margin:0 0 10px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 20px;background:var(--hd);color:#fff}
+header h1{font-size:26px;font-weight:800}header p{margin:0;opacity:.85;font-size:13px}
+.wrap{display:grid;grid-template-columns:minmax(0,1fr) 270px;gap:20px;max-width:1220px;margin:0 auto;padding:20px}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:14px;padding:16px;margin-bottom:16px}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.5fr);gap:16px}@media(max-width:760px){.two{grid-template-columns:1fr}}
+button,input,select{font:inherit;color:inherit}
+button{cursor:pointer;border:1px solid var(--ln);background:var(--sf);border-radius:999px;padding:5px 13px}
+button.p{background:var(--hd);border-color:var(--hd);color:#fff}
+.hb{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.4)}
+button:disabled{opacity:.4;cursor:default}
+:focus-visible{outline:3px solid var(--ring);outline-offset:2px}
+input,select{border:1px solid var(--ln);border-radius:8px;padding:7px 9px;background:var(--bg);min-width:0;max-width:100%}
+.row{display:flex;flex-wrap:wrap;gap:8px;align-items:end}.row label{display:flex;flex-direction:column;font-size:13px;color:var(--mut);gap:2px}
+.tabs{display:flex;gap:8px;margin-bottom:16px}.tabs button[aria-selected=true]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.shelf{display:grid;grid-template-columns:auto repeat(6,minmax(0,1fr));gap:5px}
+.al{font:800 16px 'Bricolage Grotesque',sans-serif;align-self:center;padding-right:4px}
+.cell{border:1px dashed var(--ln);border-radius:8px;padding:5px 2px;text-align:center;font-size:11px;min-height:50px;overflow:hidden}
+.cell b{display:block;font-size:12px}.cell.f{border-style:solid;background:var(--hl)}
+.cell.on{background:var(--hd);color:#fff;border-color:var(--ring);box-shadow:0 0 0 3px var(--ring)}
+.tw{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:560px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--ln);white-space:nowrap}th{font-size:13px;color:var(--mut);font-weight:600}
+tr.on td{background:var(--hl)}.b{border-radius:999px;padding:1px 9px;font-size:12px}.b.w{background:var(--ambbg);color:var(--amb)}.b.x{background:var(--redbg);color:var(--red)}
+.chain{display:flex;flex-wrap:wrap;gap:10px;align-items:stretch;margin-top:12px}.ar{align-self:center;color:var(--mut);font-weight:600}
+.nd{border:1px solid var(--ln);border-left:7px solid var(--hd);border-radius:12px;padding:10px;flex:1 1 200px;max-width:260px;display:flex;flex-direction:column;gap:6px}
+.nd input{width:100%}ol.st{margin:0;padding-left:20px;font-size:13px}ol.st li:first-child{font-weight:600}
+#msg{min-height:22px;margin:0 0 12px;font-weight:600}#msg.err{color:var(--red)}
+@media(prefers-reduced-motion:no-preference){.cell{transition:background .2s}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>PharmaCare</h1><p>Inventory & prescription tracker</p></div>
+  <div class="row" style="align-items:center">
+    <button class="hb" id="undo">Undo</button><button class="hb" id="redo">Redo</button>
+  </div>
+</header>
+<div class="wrap">
+<main>
+  <p id="msg" role="status"></p>
+  <div class="tabs" role="tablist">
+    <button role="tab" data-t="inv" aria-selected="true">Inventory</button>
+    <button role="tab" data-t="pat" aria-selected="false">Patients</button>
+  </div>
+
+  <section id="inv">
+    <div class="two">
+      <div class="card">
+        <h2>Find a drug</h2>
+        <p class="cap">Binary search on the sorted ID array</p>
+        <form id="ff" class="row"><label>Drug ID<input id="q" placeholder="MED-1006" autocomplete="off"></label><button class="p">Find</button></form>
+        <p id="res" style="margin-bottom:0">Enter an ID to see where it sits on the shelves.</p>
+      </div>
+      <div class="card">
+        <h2>Shelf map</h2>
+        <p class="cap">2D array: shelf[aisle][slot] gives a location in O(1)</p>
+        <div class="shelf" id="shelf"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><h2>Stock</h2><p class="cap" style="margin:0">Merge sort orders the table. Amber means expiring within 90 days.</p></div>
+        <label class="row" style="align-items:center;gap:6px"><span class="cap" style="margin:0">Sort by</span>
+          <select id="sort"><option value="name">Drug name (A–Z)</option><option value="exp">Expiry (soonest)</option><option value="qty">Quantity (lowest)</option><option value="id">Drug ID</option></select></label>
+      </div>
+      <div class="tw"><table><thead><tr><th>ID</th><th>Drug</th><th>Qty</th><th>Expires</th><th>Shelf</th><th></th></tr></thead><tbody id="tb"></tbody></table></div>
+    </div>
+
+    <div class="card">
+      <h2>Add a drug</h2>
+      <p class="cap">New entries are inserted into the sorted array by binary search</p>
+      <form id="fd" class="row">
+        <label>ID<input name="did" size="9"></label>
+        <label>Drug name<input name="nm" placeholder="Losartan 50 mg"></label>
+        <label>Qty<input name="qty" type="number" min="0" value="50" style="width:80px"></label>
+        <label>Expiry<input name="exp" type="date"></label>
+        <label>Aisle<select name="ai"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label>
+        <label>Slot<select name="sl"><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option></select></label>
+        <button class="p">Add drug</button>
+      </form>
+    </div>
+  </section>
+
+  <section id="pat" hidden>
+    <div class="card">
+      <div class="row" style="justify-content:space-between">
+        <div><h2>Refill history</h2><p class="cap" style="margin:0">Each patient’s prescriptions are a singly linked list</p></div>
+        <label class="row" style="align-items:center;gap:6px"><span class="cap" style="margin:0">Patient</span><select id="ps"></select></label>
+      </div>
+      <div class="chain" id="chain"></div>
+    </div>
+    <div class="card">
+      <h2>Add a prescription</h2>
+      <p class="cap">Insert a node at the head (newest first) or the tail</p>
+      <form id="fr" class="row">
+        <label>Drug<select id="rd"></select></label>
+        <label>Dosage<input name="dose" value="1 tablet daily"></label>
+        <label>Refills<input name="left" type="number" min="0" value="3" style="width:80px"></label>
+        <label>Position<select name="pos"><option value="h">Head</option><option value="t">Tail</option></select></label>
+        <button class="p">Add prescription</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>New patient</h2>
+      <form id="fp" class="row"><label>Full name<input name="n"></label><button class="p">Add patient</button></form>
+    </div>
+  </section>
+</main>
+
+<aside>
+  <div class="card">
+    <h2>Action history</h2>
+    <p class="cap">Undo stack, newest on top. Ctrl+Z and Ctrl+Y work too.</p>
+    <ol class="st" id="us"></ol>
+    <p class="cap" style="margin:10px 0 0" id="rc"></p>
+  </div>
+</aside>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const AISLES=['A','B','C','D'],SLOTS=6;
+const day=n=>new Date(Date.now()+n*864e5).toISOString().slice(0,10);
+const today=day(0),daysLeft=e=>Math.round((new Date(e)-new Date(today))/864e5);
+
+/* Stack */
+class Stack{constructor(){this.a=[]}push(x){this.a.push(x)}pop(){return this.a.pop()}clear(){this.a=[]}get size(){return this.a.length}}
+/* Singly linked list of prescriptions */
+class Node{constructor(d){this.d=d;this.next=null}}
+class RxList{
+  constructor(){this.head=null;this.n=0}
+  insertAt(i,d){const nd=new Node(d);if(i<=0||!this.head){nd.next=this.head;this.head=nd}else{let p=this.head;for(let k=1;k<i&&p.next;k++)p=p.next;nd.next=p.next;p.next=nd}this.n++}
+  removeAt(i){let r;if(i===0){r=this.head;this.head=r.next}else{let p=this.head;for(let k=1;k<i;k++)p=p.next;r=p.next;p.next=r.next}this.n--;return r.d}
+  toArray(){const o=[];for(let p=this.head;p;p=p.next)o.push(p.d);return o}
+}
+/* 2D array: aisles x slots */
+const shelf=AISLES.map(()=>Array(SLOTS).fill(null));
+/* Inventory array, always kept sorted by ID */
+const inv=[];
+function bsearch(id){let lo=0,hi=inv.length-1,steps=0;while(lo<=hi){steps++;const m=(lo+hi)>>1;if(inv[m].id===id)return{i:m,steps};if(inv[m].id<id)lo=m+1;else hi=m-1}return{i:-1,steps,ins:lo}}
+function msort(a,cmp){if(a.length<2)return a;const m=a.length>>1,l=msort(a.slice(0,m),cmp),r=msort(a.slice(m),cmp),o=[];let i=0,j=0;while(i<l.length&&j<r.length)o.push(cmp(l[i],r[j])<=0?l[i++]:r[j++]);return o.concat(l.slice(i),r.slice(j))}
+const CMP={name:(a,b)=>a.name.localeCompare(b.name),exp:(a,b)=>a.exp<b.exp?-1:a.exp>b.exp?1:0,qty:(a,b)=>a.qty-b.qty,id:(a,b)=>a.id<b.id?-1:1};
+
+/* Undo / redo stacks */
+const U=new Stack(),R=new Stack();
+function act(label,doFn,undoFn){doFn();U.push({label,doFn,undoFn});R.clear();say(label);render()}
+function undo(){const c=U.pop();if(!c)return;c.undoFn();R.push(c);say('Undid: '+c.label);render()}
+function redo(){const c=R.pop();if(!c)return;c.doFn();U.push(c);say('Redid: '+c.label);render()}
+function say(m,err){const e=$('#msg');e.textContent=m;e.className=err?'err':''}
+
+const loc=d=>AISLES[d.r]+(d.c+1);
+const nameOf=id=>{const r=bsearch(id);return r.i<0?id:inv[r.i].name};
+let hl=null,cur=0;const P=[];
+
+/* Seed data */
+[['Amoxicillin 500 mg',120,400],['Atorvastatin 20 mg',80,520],['Cetirizine 10 mg',200,45],['Insulin glargine pen',24,60],['Ibuprofen 400 mg',310,700],['Lisinopril 10 mg',95,300],['Metformin 500 mg',150,-12],['Omeprazole 20 mg',60,85],['Salbutamol inhaler',18,210],['Paracetamol 500 mg',500,610]]
+.forEach((x,i)=>{const d={id:'MED-'+(1001+i),name:x[0],qty:x[1],exp:day(x[2]),r:i%4,c:(i/4|0)*2};inv.push(d);shelf[d.r][d.c]=d.id});
+function mkP(n,rx){const l=new RxList();rx.forEach(r=>l.insertAt(l.n,r));P.push({name:n,l})}
+mkP('Maria Santos',[{did:'MED-1006',dose:'10 mg once daily',left:3,last:day(-20)},{did:'MED-1002',dose:'20 mg at night',left:5,last:day(-35)}]);
+mkP('Jose Reyes',[{did:'MED-1007',dose:'500 mg twice daily',left:2,last:day(-10)}]);
+mkP('Ana Dizon',[{did:'MED-1009',dose:'2 puffs as needed',left:1,last:day(-60)},{did:'MED-1003',dose:'10 mg daily',left:0,last:day(-90)}]);
+
+/* Drug actions */
+function addDrug(d){act(`Added ${d.name} to shelf ${loc(d)}`,()=>{inv.splice(bsearch(d.id).ins,0,d);shelf[d.r][d.c]=d.id},()=>{inv.splice(bsearch(d.id).i,1);shelf[d.r][d.c]=null})}
+
+/* Rendering */
+function renderInv(){
+  const rows=msort(inv,CMP[$('#sort').value]);
+  $('#tb').innerHTML=rows.map(d=>{const dl=daysLeft(d.exp),k=dl<0?'x':dl<=90?'w':'';
+    return `<tr class="${d.id===hl?'on':''}"><td>${d.id}</td><td>${esc(d.name)}</td><td>${d.qty}</td><td>${d.exp} <span class="b ${k}">${dl<0?'Expired':dl+' days'}</span></td><td>${loc(d)}</td><td><button data-id="${d.id}">Restock +10</button></td></tr>`}).join('');
+}
+function renderShelf(){
+  $('#shelf').innerHTML=shelf.map((row,r)=>`<span class="al">${AISLES[r]}</span>`+row.map((id,c)=>`<div class="cell${id?' f':''}${id&&id===hl?' on':''}"><b>${AISLES[r]}${c+1}</b>${id||'empty'}</div>`).join('')).join('');
+}
+function renderPat(){
+  cur=Math.min(cur,P.length-1);
+  $('#ps').innerHTML=P.map((p,i)=>`<option value="${i}"${i===cur?' selected':''}>${esc(p.name)} (${p.l.n})</option>`).join('');
+  const rd=$('#rd'),v=rd.value;rd.innerHTML=inv.map(d=>`<option value="${d.id}">${esc(d.name)}</option>`).join('');if(v)rd.value=v;
+  const a=P[cur].l.toArray();
+  $('#chain').innerHTML='<span class="ar">HEAD →</span>'+(a.length?a.map((d,i)=>`<div class="nd"><b>${esc(nameOf(d.did))}</b><small>${d.did}</small><label class="cap">Dosage<input class="dose" data-i="${i}" value="${esc(d.dose)}"></label><small>${d.left} refills left. Last filled ${d.last}.</small><div><button data-a="refill" data-i="${i}">Refill</button> <button data-a="del" data-i="${i}">Remove</button></div></div><span class="ar">→</span>`).join(''):'<small>No prescriptions yet.</small><span class="ar">→</span>')+'<span class="ar">NULL</span>';
+}
+function renderStack(){
+  $('#us').innerHTML=U.size?U.a.slice().reverse().slice(0,12).map(c=>`<li>${esc(c.label)}</li>`).join(''):'<small>Nothing to undo yet.</small>';
+  $('#rc').textContent=`Redo stack: ${R.size} ${R.size===1?'action':'actions'}`;
+  $('#undo').disabled=!U.size;$('#redo').disabled=!R.size;
+}
+function render(){renderInv();renderShelf();renderPat();renderStack()}
+
+/* Events */
+$('#undo').onclick=undo;$('#redo').onclick=redo;$('#sort').onchange=renderInv;
+document.addEventListener('keydown',e=>{if(!(e.ctrlKey||e.metaKey)||/INPUT|SELECT/.test(e.target.tagName))return;const k=e.key.toLowerCase();if(k==='z'){e.preventDefault();e.shiftKey?redo():undo()}else if(k==='y'){e.preventDefault();redo()}});
+document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));$('#inv').hidden=b.dataset.t!=='inv';$('#pat').hidden=b.dataset.t!=='pat'});
+
+$('#ff').onsubmit=e=>{e.preventDefault();let id=$('#q').value.trim().toUpperCase();if(/^\d{4}$/.test(id))id='MED-'+id;const r=bsearch(id);
+  if(r.i<0){hl=null;$('#res').textContent=`No drug with ID ${id||'(blank)'}. Binary search checked ${r.steps} of ${inv.length} items.`}
+  else{const d=inv[r.i];hl=d.id;$('#res').textContent=`${d.name} is on shelf ${loc(d)} (shelf[${d.r}][${d.c}]), ${d.qty} in stock. Found in ${r.steps} steps out of ${inv.length} items.`}
+  renderInv();renderShelf()};
+
+$('#tb').onclick=e=>{const b=e.target.closest('button');if(!b)return;const g=inv[bsearch(b.dataset.id).i];act(`Restocked ${g.name} (+10)`,()=>g.qty+=10,()=>g.qty-=10)};
+
+const fd=$('#fd');
+function nextId(){fd.did.value='MED-'+(Math.max(...inv.map(d=>+d.id.slice(4)))+1)}
+fd.onsubmit=e=>{e.preventDefault();const id=fd.did.value.trim().toUpperCase(),name=fd.nm.value.trim(),qty=+fd.qty.value,exp=fd.exp.value,r=+fd.ai.value,c=+fd.sl.value-1;
+  if(!/^MED-\d{4}$/.test(id))return say('Use an ID with four digits, like MED-1011.',1);
+  if(bsearch(id).i>=0)return say(`${id} already exists. Choose a new ID.`,1);
+  if(!name||!exp||!(qty>=0))return say('Enter a drug name, a quantity and an expiry date.',1);
+  if(shelf[r][c])return say(`Shelf ${AISLES[r]}${c+1} already holds ${shelf[r][c]}. Choose a free shelf.`,1);
+  addDrug({id,name,qty,exp,r,c});fd.nm.value='';nextId()};
+
+$('#ps').onchange=e=>{cur=+e.target.value;renderPat()};
+$('#chain').onchange=e=>{if(!e.target.matches('.dose'))return;const d=P[cur].l.toArray()[+e.target.dataset.i],old=d.dose,nv=e.target.value.trim();if(!nv||nv===old)return renderPat();act(`Changed dosage of ${nameOf(d.did)} to “${nv}”`,()=>d.dose=nv,()=>d.dose=old)};
+$('#chain').onclick=e=>{const b=e.target.closest('button');if(!b)return;const i=+b.dataset.i,p=P[cur],d=p.l.toArray()[i];
+  if(b.dataset.a==='del'){let saved;return act(`Removed ${nameOf(d.did)} from ${p.name}’s history`,()=>{saved=p.l.removeAt(i)},()=>p.l.insertAt(i,saved))}
+  const r=bsearch(d.did);if(r.i<0)return say('That drug is no longer in inventory.',1);const g=inv[r.i];
+  if(!d.left)return say('No refills left. Ask the prescriber for a new prescription.',1);
+  if(!g.qty)return say(`${g.name} is out of stock. Restock it first.`,1);
+  const prev={left:d.left,last:d.last};
+  act(`Refilled ${g.name} for ${p.name}`,()=>{d.left--;d.last=today;g.qty--},()=>{d.left=prev.left;d.last=prev.last;g.qty++})};
+$('#fr').onsubmit=e=>{e.preventDefault();const f=e.target,p=P[cur],did=$('#rd').value;if(!did)return say('Add a drug to the inventory first.',1);
+  const rx={did,dose:f.dose.value.trim()||'As directed',left:Math.max(0,+f.left.value||0),last:'never'},pos=f.pos.value==='h'?0:p.l.n;
+  act(`Added ${nameOf(did)} to ${p.name}’s history`,()=>p.l.insertAt(pos,rx),()=>p.l.removeAt(pos))};
+$('#fp').onsubmit=e=>{e.preventDefault();const f=e.target,n=f.n.value.trim();if(!n)return say('Enter the patient’s name.',1);
+  const p={name:n,l:new RxList()};act(`Added patient ${n}`,()=>P.push(p),()=>P.pop());cur=P.length-1;f.n.value='';renderPat()};
+
+fd.exp.value=day(365);nextId();render();
+</script>
+</body>
+</html>
