@@ -11,7 +11,7 @@
 <header>
   <div><h1>PharmaCare</h1><p>Inventory & prescription tracker</p></div>
   <div class="row" style="align-items:center">
-    <button class="hb" id="undo">Undo</button><button class="hb" id="redo">Redo</button>
+    <button class="hb" id="undo">Undo</button><button class="hb" id="redo">Redo</button><button class="hb" id="reset">Reset data</button>
   </div>
 </header>
 <div class="wrap">
@@ -207,7 +207,7 @@ function renderStack(){
   $('#rc').textContent=`Redo stack: ${R.size} ${R.size===1?'action':'actions'}`;
   $('#undo').disabled=!U.size;$('#redo').disabled=!R.size;
 }
-function render(){renderInv();renderShelf();renderPat();renderStack()}
+function render(){renderInv();renderShelf();renderPat();renderStack();save()}
 
 /* Type-to-search combobox: filters as you type (substring match, prefix matches first) */
 function combo(inp,ul,items,curKey,pick){
@@ -272,6 +272,15 @@ $('#fr').onsubmit=e=>{e.preventDefault();const f=e.target,p=P[cur],did=rxDrug;if
 $('#fp').onsubmit=e=>{e.preventDefault();const f=e.target,n=f.n.value.trim();if(!n)return say('Enter the patient’s name.',1);
   const p={name:n,l:new RxList()};act(`Added patient ${n}`,()=>P.push(p),()=>P.pop());cur=P.length-1;f.n.value='';renderPat()};
 
+/* Saving: everything is kept in the browser's localStorage, so it survives closing the tab */
+const KEY='pharmacare-data-v1';
+function save(){try{localStorage.setItem(KEY,JSON.stringify({inv,P:P.map(p=>({name:p.name,rx:p.l.toArray()}))}))}catch(e){}}
+function load(){try{const s=JSON.parse(localStorage.getItem(KEY));if(!s||!Array.isArray(s.inv)||!Array.isArray(s.P)||!s.P.length)return;
+  inv.length=0;shelf.forEach(r=>r.fill(null));
+  s.inv.forEach(d=>{inv.push(d);if(shelf[d.r]&&d.c<SLOTS)shelf[d.r][d.c]=d.id});
+  P.length=0;s.P.forEach(p=>{const l=new RxList();p.rx.forEach(r=>l.insertAt(l.n,r));P.push({name:p.name,l})})}catch(e){}}
+$('#reset').onclick=()=>{if(confirm('Erase all saved changes and go back to the starting data?')){try{localStorage.removeItem(KEY)}catch(e){}location.reload()}};
+load();
 fd.ai.innerHTML=AISLES.map((a,i)=>`<option value="${i}">${a}</option>`).join('');fd.sl.innerHTML=Array.from({length:SLOTS},(_,i)=>`<option>${i+1}</option>`).join('');
 fd.exp.value=day(365);nextId();render();
 </script>
